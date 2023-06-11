@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssafy.plan.model.mapper.JournalMapper">
+
+
+
+	
+	
+	<!-- 여행기 리스트 키워드 검색 -->	
+	<select id="getJournalListByKeyword" resultType="HashMap">
+		SELECT
+			ti.id journalId, u.user_name userName, p.start_at startAt, p.end_at endAt, s.sido_name sidoName, ti.readcount readCount,ti.title title
+		FROM
+			plan p
+		JOIN
+			sido s
+		ON
+			p.sido_code = s.sido_code
+		JOIN 
+			tour_info ti
+		ON
+			ti.plan_id = p.id
+		JOIN
+			user u
+		ON
+			u.id = p.user_id
+		WHERE
+			ti.title like CONCAT('%',#{keyword},'%') or s.sido_name like CONCAT('%',#{keyword},'%')
+		ORDER BY
+			ti.readcount desc
+		LIMIT
+			#{page}, 9
+	</select>
+	
+	<!-- 여행기 세부 내용 확인 -->
+	<select id="getJournalInfo" resultType="HashMap">
+		SELECT
+			u.user_name userName, p.start_at startAt, p.end_at endAt, s.sido_name sidoName, ti.readcount readCount,ti.title title, ti.content content
+		FROM
+			plan p
+		JOIN
+			sido s
+		ON
+			p.sido_code = s.sido_code
+		JOIN 
+			tour_info ti
+		ON
+			ti.plan_id = p.id
+		JOIN
+			user u
+		ON
+			u.id = p.user_id
+		WHERE
+			ti.id = #{journalId}
+	</select>
+	
+	<!-- 여행기 리스트 -->
+	<select id="getJournalList" resultType="HashMap">
+		SELECT
+			ti.id journalId, u.user_name userName, p.start_at startAt, p.end_at endAt, s.sido_name sidoName, ti.readcount readCount,ti.title title
+		FROM
+			plan p
+		JOIN
+			sido s
+		ON
+			p.sido_code = s.sido_code
+		JOIN 
+			tour_info ti
+		ON
+			ti.plan_id = p.id
+		JOIN
+			user u
+		ON
+			u.id = p.user_id
+		LIMIT
+			#{page}, 9
+	</select>
+	
+	<!-- 여행기 작성 -->
+		<insert id= "insertPlanWrite" parameterType="com.ssafy.plan.model.dto.TourInfoDto">
+		insert into
+			tour_info(title, content,user_id,plan_id)
+		values
+			(#{title},#{content},#{userId}, #{planId})
+	</insert>
+	
+	<!-- ??  -->
+<!-- 	<select id="" resultType="HashMap"> -->
+<!-- 	SELECT -->
+<!-- 		p.start_at startAt, p.end_at endAt, s.sido_name sidoName, u.user_name userName -->
+<!-- 	FROM -->
+<!-- 		plan p -->
+<!-- 	JOIN -->
+<!-- 		user u -->
+<!-- 	ON -->
+<!-- 		p.user_id = u.id -->
+<!-- 	JOIN -->
+<!-- 		sido s -->
+<!-- 	ON -->
+<!-- 		s.sido_code = p.sido_code -->
+<!-- 	ORDER BY -->
+<!-- 		p.end_at desc -->
+<!-- 	</select> -->
+	
+	
+	</mapper>

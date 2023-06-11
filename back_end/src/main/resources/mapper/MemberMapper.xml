@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.member.model.mapper.MemberMapper">
+    <select resultType="com.ssafy.member.model.dto.MemberDto"
+        id="selectOne">
+        select 
+            user_name as userName, nick_name as nickName 
+        from 
+            user
+        where 
+             id = #{id} and pw = #{pw}; 
+         </select>
+         
+         
+         <select resultType="com.ssafy.member.model.dto.MemberDto"
+        id="getUserInfo">
+        select 
+            id ,user_name as userName, email , phone, userImg, nick_name as nickName
+        from 
+            user
+        where 
+             id = #{id} 
+         </select>
+         
+         
+          <select resultType="com.ssafy.plan.model.dto.PlanDto"
+        id="getMyPlan">
+        select 
+            user_id as userId ,start_at as startAt, end_at as endAt , title, id, s.sido_name regionName
+        from 
+            plan p
+        join
+        	sido s
+        on s.sido_code = p.sido_code
+        where 
+             user_id = #{user_id}
+         </select>
+         
+         
+         
+         
+         <select resultType= "int"
+        id="selectCheckId">
+        select 
+           COUNT(*) as count
+        from 
+            user
+        where 
+             id = #{userId}; 
+         </select>
+         
+         
+         
+         
+        <select resultType="String"
+        id="selectId">
+        select 
+             pw
+        from 
+            user
+        where 
+             id = #{id};
+         </select>
+         
+         
+         
+         <insert id="insert"  parameterType="com.ssafy.member.model.dto.MemberDto">
+        	 insert into user 
+        	 (id, pw, user_name, phone, nick_name, email)
+        	 values ( #{id}, #{pw}, #{userName}, #{phone}, #{nickName}, #{email})
+         </insert>
+         
+         
+         <delete id="delete" parameterType = "String">
+         	DELETE FROM user WHERE id = #{id};
+         
+         </delete>
+         
+         
+		<select id="getPlanListForJournal" resultType="HashMap">
+		SELECT 
+			p.id, p.title, p.start_at startAt,p.end_at endAt, s.sido_name sidoName
+		FROM
+			plan p
+		JOIN
+			sido s
+		ON
+			p.sido_code = s.sido_code
+		WHERE
+			p.user_id = #{userId} and p.id not in (select plan_id from tour_info where user_id = #{userId});
+		</select>
+
+
+		<select id="getUserImage" resultType="String">
+			SELECT
+				userImg
+			FROM
+				user
+			WHERE
+				id = #{memberId}
+		</select>
+		
+		<select id="getJournalList" resultType="HashMap">
+			SELECT
+				ti.id, ti.title, ti.content, p.start_at startAt, p.end_at endAt, ti.readcount readCount 
+			FROM
+				tour_info ti
+			JOIN
+				plan p
+			ON
+				ti.plan_id = p.id
+			WHERE p.user_id = #{id}
+		</select>
+		<update id="modifyUserInfo" parameterType="com.ssafy.member.model.dto.MemberDto">
+ 		UPDATE
+ 		 	user
+  		SET 
+  			pw = #{pw}, user_name = #{userName}, phone = #{phone}, email = #{email}, userImg=#{userImg}
+  		WHERE 
+  			id = #{id}
+		</update>
+		
+		<select id="getUserJournal" resultType="HashMap">
+			SELECT
+				ti.id journalId, ti.title, p.start_at startAt, p.end_at endAt, s.sido_name sidoName, u.user_name userName, ti.readcount readCount
+			FROM
+				tour_info ti
+			JOIN
+				plan p
+			ON
+				ti.plan_id = p.id
+			JOIN
+				sido s
+			ON
+				s.sido_code = p.sido_code
+			JOIN
+				user u
+			ON
+				u.id = p.user_id
+			WHERE p.user_id = #{id}
+		</select>
+		
+
+</mapper>

@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssafy.plan.model.mapper.PlanMapper">
+	<!-- plan -->
+	<resultMap id="plan" type="com.ssafy.plan.model.dto.PlanDto">
+		<result column="user_id" property="userId" />
+		<result column="start_at" property="startAt" />
+		<result column="end_at" property="endAt" />
+		<result column="sido_name" property="regionName" />
+		<result column="user_name" property="userName" />
+		<result column="title" property="title" />
+	</resultMap>
+	<!-- dayPlan -->
+	<resultMap id="dayPlan" type="com.ssafy.plan.model.dto.DayPlanDto">
+		<result column="id" property="id" />
+		<result column="date" property="date" />
+		<result column="plan_id" property="planId" />
+		<collection property="places"  ofType="com.ssafy.plan.model.dto.PlaceDto">
+			<id property="contentId" column="content_id" />
+			<result property="title" column="title" />
+			<result property="addr" column="addr" />
+			<result column="first_image" property="firstImage" />
+			<result column="first_image2" property="firstImage2" />
+			<result property="readCount" column="readcount" />
+			<result property="sidoName" column="sido_name" />
+			<result property="gugunName" column="gugun_name" />
+			<result property="latitude" column="latitude" />
+			<result property="longitude" column="longitude" />
+		</collection>
+	</resultMap>
+	<resultMap type="com.ssafy.plan.model.dto.PlaceDto" id="place">
+	<id property="contentId" column="content_id" />
+			<result property="title" column="title" />
+			<result property="addr" column="addr" />
+			<result column="first_image" property="firstImage" />
+			<result column="first_image2" property="firstImage2" />
+			<result property="readCount" column="readcount" />
+			<result property="sidoName" column="sido_name" />
+			<result property="gugunName" column="gugun_name" />
+			<result property="latitude" column="latitude" />
+			<result property="longitude" column="longitude" />
+	</resultMap>
+	<resultMap type="com.ssafy.plan.model.dto.PlaceDto" id="placeS">
+      <result column="content_id" property="contentId"/>
+      <result column="title" property="title"/>
+      <result column="addr" property="addr"/>
+      <result column="first_image" property="firstImage"/>
+      <result column="first_image2" property="firstImage2"/>
+      <result column="readcount" property="readCount"/>
+      <result column="sido_code" property="sidoCode"/>
+      <result column="gugun_code" property="gugunCode"/>
+      <result column="longitude" property="longitude"/>
+      <result column="latitude" property="latitude"/>
+      <result column="gugun_name" property="gugunName"/>
+      <result column="sido_name" property="sidoName"/>
+    </resultMap>
+	
+	<!-- 1일 단위 여행 리스트 가져오기 -->
+	<select id="getDayList" resultType="HashMap">
+	SELECT
+		dp.date, ai.content_id, ai.title, ai.latitude, ai.longitude
+     FROM
+     	attraction_info ai
+     JOIN
+     	day_plan dp
+     ON
+     	dp.attraction_info_content_id = ai.content_id
+     JOIN
+     	sido s
+     ON
+     	s.sido_code = ai.sido_code
+	WHERE
+     	dp.plan_id = #{planId}
+	order by dp.date, dp.orders;
+	</select>
+	
+	
+	<!-- 여행장소 리스트 가져오기 -->
+	<select id="getLocationList" resultMap="place">
+		select
+			content_id, title, addr, first_image, first_image2, readcount, sg.sido_name, sg.gugun_name, latitude, longitude
+		from
+			attraction_info ai
+		join
+			(select g.gugun_code, g.sido_code, s.sido_name, g.gugun_name
+ 			from gugun g natural join sido s) sg 
+		on 
+			ai.gugun_code =sg.gugun_code and ai.sido_code = sg.sido_code
+		order by ai.readcount desc
+		limit #{page}, 9
+	</select>
+	
+	<!-- 여행 리스트 출력 -->
+	<select id="getPlanList" resultMap="plan">
+	SELECT
+		p.id, p.user_id, p.start_at, p.end_at, s.sido_name, u.user_name, title
+	FROM
+		plan p
+	JOIN
+		sido s
+	ON
+		s.sido_code = p.sido_code
+	JOIN
+		user u
+	ON
+		u.id = p.user_id
+	LIMIT
+	 	#{pageNo}, 9
+	</select>
+	
+	<select id="getPlanListByKeyword" resultMap="plan">
+	SELECT
+		p.id, p.user_id, p.start_at, p.end_at, s.sido_name, u.user_name, title
+	FROM
+		plan p
+	JOIN
+		sido s
+	ON
+		s.sido_code = p.sido_code
+	JOIN
+		user u
+	ON
+		u.id = p.user_id
+	WHERE
+		s.sido_name like CONCAT('%',#{keyword},'%')
+	LIMIT #{pageNo}, 9
+	</select>	
+	
+	<!-- 여행 정보 조회 -->
+	<select id="getPlanInfo" resultMap="plan">
+	SELECT
+		p.id, p.user_id, p.start_at, p.end_at, s.sido_name, u.user_name, title
+	FROM
+		plan p
+	JOIN
+		sido s
+	ON
+		s.sido_code = p.sido_code
+	JOIN
+		user u
+	ON
+		u.id = p.user_id
+	WHERE
+		p.id = #{planId}
+	</select>
+	
+	<!-- 키워드 검색 -->
+	<select id="getLocationListByKeyword" resultMap="place">
+		select
+			content_id, title, addr, first_image, first_image2, readcount, sido_name, gugun_name, latitude, longitude
+		from
+			attraction_info ai
+		join
+			(select *
+				from gugun g natural join sido s) sg 
+		on 
+			ai.gugun_code =sg.gugun_code and ai.sido_code = sg.sido_code
+		where
+			ai.title like CONCAT('%',#{keyword},'%') and ai.addr like CONCAT('%',#{keyword},'%') 
+		order by ai.readcount desc
+		<if test="pageNo != 99999">
+    		LIMIT #{pageNo}, 9
+  		</if>
+  		<if test="pageNo == 99999">
+    		LIMIT 50
+  		</if>
+	</select>
+	
+	<!-- 장소, 키워드 검색 -->
+	<select id="getLocationListByLocationNameAndKeyword" resultMap="place">
+		select
+			content_id, title, addr, first_image, first_image2, readcount, sido_name, gugun_name, latitude, longitude
+		from
+			attraction_info ai
+		join
+			(select *
+				from gugun g natural join sido s) sg 
+		on 
+			ai.gugun_code =sg.gugun_code and ai.sido_code = sg.sido_code
+		where
+			sg.sido_name = #{locationName} and ai.title like CONCAT('%',#{keyword},'%')
+		order by
+			ai.readcount desc
+    	LIMIT
+    		50
+	</select>
+	
+	<!-- 많이 찾은 곳 리스트 출력 -->
+	<select id="getHotLocation" resultType="HashMap">
+		SELECT
+			sum(readcount) readcount, g.gugun_name name
+		FROM
+			attraction_info ai
+		JOIN
+			gugun g
+		ON
+			g.gugun_code = ai.gugun_code and g.sido_code = ai.sido_code
+		GROUP BY
+			ai.sido_code, ai.gugun_code
+		ORDER BY
+			readcount desc
+		LIMIT 8
+	</select>
+	
+	<!-- 시도, 구군 코드 가져오기 -->
+	<select id="getSidoGugun" resultType="HashMap">
+		Select
+			sido_code, gugun_code
+		From
+			gugun
+		Where
+			sido_code = sido and gugun_code = gugun
+	</select>
+	
+	<!-- 시도, 구군 코드 및 이름 가져오기 -->
+	<select id="getRegion" resultType="HashMap">
+      SELECT 
+      	sido_name name, sido_code sidoCode
+      FROM 
+      	sido s
+    </select>
+    
+    <resultMap type="map" id="regionMap">
+      <result column="sido_code" property="sidoCode"/>
+      <result column="gugun_code" property="gugunCode"/>
+      <result column="gugun_name" property="gugunName"/>
+    </resultMap>
+    
+    <!-- 해당 지역의 장소 리스트 출력 -->
+    <select id="getMapPlace" resultMap="placeS">
+    	select
+			content_id, title, addr, first_image, first_image2, readcount, g.sido_code, g.gugun_code, latitude, longitude, g.gugun_name, s.sido_name
+		from 
+			attraction_info a
+		join
+			gugun g
+		on
+			a.sido_code = g.sido_code and a.gugun_code = g.gugun_code
+		join
+			sido s
+		on
+			s.sido_code = a.sido_code
+		where
+			a.gugun_code =#{gugun} and a.sido_code= #{sido}
+    </select>
+	
+	
+	<!-- 장소 ID로 가져오기 -->
+	<select id="getLocationInfo" resultType="HashMap">
+		SELECT
+			ai.title, ad.overview content, s.sido_name sidoName,
+			 g.gugun_name gugunName, ai.readcount, ai.first_image firstImage, ai.addr, ai.latitude lat, ai.longitude lng
+		FROM
+			attraction_description ad
+		JOIN
+			attraction_info ai
+		ON
+			ad.content_id = ai.content_id
+		join
+			gugun g
+		on
+			ai.sido_code = g.sido_code and ai.gugun_code = g.gugun_code
+		join
+			sido s
+		on
+			s.sido_code = ai.sido_code
+		WHERE
+			ai.content_id = #{contentId}
+	</select>
+	
+	<!--  시 이름으로 code 가져오는 코드   -->
+	<select id="getCode" resultType="HashMap">
+		SELECT
+			s.sido_code sidoCode
+		FROM
+			sido s
+		WHERE
+			 s.sido_name = #{locationName}
+	</select>
+	
+	
+	<!-- 여행일정 삽입 -->
+	<insert id="insertPlan" parameterType="com.ssafy.plan.model.dto.PlanDto" useGeneratedKeys="true" keyProperty="id">
+		insert into
+			plan(user_id, start_at,end_at,title,sido_code)
+		values
+			(#{userId},#{startAt,jdbcType=DATE},#{endAt,jdbcType=DATE},#{title},#{sidoCode})
+	</insert>
+	
+	
+	<!-- 1일 단위 여행 일정 삽입 -->
+	<insert id="insertDayPlan" parameterType="com.ssafy.plan.model.dto.DayPlanDto">
+		insert into
+			day_plan(date, attraction_info_content_id, plan_id, orders)
+		values
+			<foreach collection="places" item="place" index="i"  separator=",">
+ 				(#{date,jdbcType=DATE},#{place.contentId},#{planId},#{i}+1)
+			</foreach>
+	</insert>
+	
+	
+	
+	
+	
+	
+	
+	
+</mapper>
